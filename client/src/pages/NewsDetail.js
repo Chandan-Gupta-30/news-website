@@ -9,7 +9,7 @@ function NewsDetail() {
 
   useEffect(() => {
     fetchNews();
-  }, []);
+  }, [fetchNews]);
 
   const fetchNews = async () => {
     const res = await axios.get("http://localhost:5000/get-news");
