@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const multer = require("multer");
 const path = require("path");
+
 const app = express();
 
 // Models
@@ -17,18 +18,16 @@ const SECRET = "mysecretkey";
 app.use(cors());
 app.use(express.json());
 
+/* ================== FILE UPLOAD ================== */
+
 // FILE STORAGE CONFIG
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "uploads/");
   },
   filename: (req, file, cb) => {
-    // Clean spaces in filename
     const cleanName = file.originalname.replace(/\s+/g, "-");
-
-    // Add timestamp to avoid overwrite
     const uniqueName = Date.now() + "-" + cleanName;
-
     cb(null, uniqueName);
   },
 });
@@ -39,9 +38,11 @@ const upload = multer({ storage });
 app.use("/uploads", express.static("uploads"));
 
 /* ================== DATABASE ================== */
+
+// 🔥 IMPORTANT: Use Atlas (environment variable)
 mongoose
-  .connect("mongodb://127.0.0.1:27017/newsDB")
-  .then(() => console.log("MongoDB Connected ✅"))
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB Atlas Connected ✅"))
   .catch((err) => console.log(err));
 
 /* ================== NEWS ROUTES ================== */
@@ -62,7 +63,8 @@ app.post("/add-news", async (req, res) => {
 // UPLOAD IMAGE
 app.post("/upload", upload.single("image"), (req, res) => {
   res.json({
-    imageUrl: `http://localhost:5000/uploads/${req.file.filename}`,
+    // 🔥 IMPORTANT: use dynamic host (for Render)
+    imageUrl: `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`,
   });
 });
 
@@ -97,10 +99,11 @@ app.post("/login", async (req, res) => {
   res.json({ token });
 });
 
-/* ================== CREATE ADMIN (RUN ONCE) ================== */
-
 /* ================== SERVER ================== */
 
-app.listen(5000, () => {
-  console.log("Server started on port 5000 🚀");
+// 🔥 IMPORTANT: dynamic port for Render
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`Server started on port ${PORT} 🚀`);
 });
