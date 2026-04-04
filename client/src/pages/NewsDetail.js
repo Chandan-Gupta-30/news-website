@@ -1,44 +1,43 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import axios from "axios";
-import Navbar from "../components/Navbar";
+import { getNews } from "../services/api";
 
 function NewsDetail() {
   const { id } = useParams();
   const [news, setNews] = useState(null);
 
   useEffect(() => {
-    fetchNews();
-  }, [fetchNews]);
+    const fetchNews = async () => {
+      const res = await getNews();
+      const selectedNews = res.data.find((item) => item._id === id);
+      setNews(selectedNews);
+    };
 
-  const fetchNews = async () => {
-    const res = await axios.get("http://localhost:5000/get-news");
-    const found = res.data.find((item) => item._id === id);
-    setNews(found);
-  };
+    fetchNews();
+  }, [id]);
 
   if (!news) return <h2 className="p-6">Loading...</h2>;
 
   return (
-    <div className="bg-gray-100 min-h-screen">
-      <Navbar />
+    <div className="p-6 max-w-3xl mx-auto">
 
-      <div className="p-6 max-w-3xl mx-auto bg-white rounded-xl shadow-md mt-6">
+      {/* IMAGE */}
+      {news.image && (
+        <img
+          src={news.image}
+          alt=""
+          className="w-full h-80 object-contain mb-4"
+        />
+      )}
 
-        {news.image && (
-          <img
-            src={news.image}
-            alt=""
-            className="w-full h-80 object-contain bg-gray-200 mb-4"
-          />
-        )}
+      {/* TITLE */}
+      <h1 className="text-3xl font-bold mb-4">{news.title}</h1>
 
-        <h1 className="text-2xl font-bold mb-4">{news.title}</h1>
+      {/* CATEGORY */}
+      <p className="text-gray-500 mb-2">{news.category}</p>
 
-        <p className="text-gray-700 mb-4">{news.content}</p>
-
-        <span className="text-blue-500 text-sm">{news.category}</span>
-      </div>
+      {/* CONTENT */}
+      <p className="text-lg">{news.content}</p>
     </div>
   );
 }
