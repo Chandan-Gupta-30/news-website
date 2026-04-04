@@ -81,6 +81,19 @@ app.put("/update-news/:id", async (req, res) => {
 });
 
 /* ================== AUTH ================== */
+// CREATE ADMIN (RUN ONCE)
+app.get("/create-admin", async (req, res) => {
+  const hashedPassword = await bcrypt.hash("12345", 10);
+
+  const admin = new Admin({
+    username: "admin",
+    password: hashedPassword,
+  });
+
+  await admin.save();
+
+  res.send("Admin created ✅");
+});
 
 // LOGIN
 app.post("/login", async (req, res) => {
