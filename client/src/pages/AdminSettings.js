@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   createAdmin,
   updateAdmin,
@@ -19,18 +19,23 @@ function AdminSettings() {
   const [updateEmail, setUpdateEmail] = useState("");
   const [updatePassword, setUpdatePassword] = useState("");
 
+  // ✅ FIXED with useCallback
+  const fetchData = useCallback(async () => {
+    try {
+      const me = await getCurrentAdmin(token);
+      setCurrentEmail(me.data.email);
+      setUpdateEmail(me.data.email);
+
+      const res = await getAllAdmins(token);
+      setAdmins(res.data);
+    } catch (err) {
+      console.log(err);
+    }
+  }, [token]);
+
   useEffect(() => {
     fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    const me = await getCurrentAdmin(token);
-    setCurrentEmail(me.data.email);
-    setUpdateEmail(me.data.email);
-
-    const res = await getAllAdmins(token);
-    setAdmins(res.data);
-  };
+  }, [fetchData]);
 
   const handleCreate = async () => {
     await createAdmin({ email: newEmail, password: newPassword }, token);
@@ -110,7 +115,10 @@ function AdminSettings() {
           onChange={(e) => setNewPassword(e.target.value)}
         />
 
-        <button className="bg-green-500 text-white px-4 py-2 rounded" onClick={handleCreate}>
+        <button
+          className="bg-green-500 text-white px-4 py-2 rounded"
+          onClick={handleCreate}
+        >
           Create
         </button>
       </div>
@@ -132,7 +140,10 @@ function AdminSettings() {
           onChange={(e) => setUpdatePassword(e.target.value)}
         />
 
-        <button className="bg-blue-500 text-white px-4 py-2 rounded" onClick={handleUpdate}>
+        <button
+          className="bg-blue-500 text-white px-4 py-2 rounded"
+          onClick={handleUpdate}
+        >
           Update
         </button>
       </div>
