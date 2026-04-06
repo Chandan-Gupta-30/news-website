@@ -38,9 +38,25 @@ mongoose
   .then(() => console.log("MongoDB Connected ✅"))
   .catch((err) => console.log(err));
 
+/* ================= INIT ADMIN (RUN ONCE) ================= */
+
+// ⚠️ TEMP ROUTE - REMOVE AFTER USE
+app.post("/init-admin", async (req, res) => {
+  const { email, password } = req.body;
+
+  const existing = await Admin.findOne({ email });
+  if (existing) return res.json("Admin already exists");
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  await Admin.create({ email, password: hashedPassword });
+
+  res.json("First admin created ✅");
+});
+
 /* ================= AUTH ================= */
 
-// LOGIN (EMAIL)
+// LOGIN
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
@@ -73,7 +89,6 @@ const verifyToken = (req, res, next) => {
 
 /* ================= ADMIN ================= */
 
-// CREATE ADMIN
 app.post("/create-admin", verifyToken, async (req, res) => {
   const { email, password } = req.body;
 
@@ -87,7 +102,6 @@ app.post("/create-admin", verifyToken, async (req, res) => {
   res.json("Admin created ✅");
 });
 
-// UPDATE ADMIN
 app.put("/update-admin", verifyToken, async (req, res) => {
   const { email, password } = req.body;
 
@@ -101,19 +115,16 @@ app.put("/update-admin", verifyToken, async (req, res) => {
   res.json("Updated ✅");
 });
 
-// GET CURRENT ADMIN
 app.get("/me", verifyToken, async (req, res) => {
   const admin = await Admin.findById(req.user.id).select("-password");
   res.json(admin);
 });
 
-// GET ALL ADMINS
 app.get("/all-admins", verifyToken, async (req, res) => {
   const admins = await Admin.find().select("-password");
   res.json(admins);
 });
 
-// DELETE ADMIN
 app.delete("/delete-admin/:id", verifyToken, async (req, res) => {
   if (req.user.id === req.params.id) {
     return res.status(400).json("You cannot delete yourself ❌");
