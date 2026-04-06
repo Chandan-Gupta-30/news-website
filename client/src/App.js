@@ -1,31 +1,30 @@
 import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 import Home from "./pages/Home";
 import Admin from "./pages/Admin";
 import Login from "./pages/Login";
 import NewsDetail from "./pages/NewsDetail";
-import ProtectedRoute from "./components/ProtectedRoute";
+import AdminSettings from "./pages/AdminSettings";
 
 function App() {
   return (
-    <BrowserRouter>
+    <Router>
       <Routes>
+
+        {/* PUBLIC */}
         <Route path="/" element={<Home />} />
+        <Route path="/news/:id" element={<NewsDetail />} />
+
+        {/* AUTH */}
         <Route path="/login" element={<Login />} />
 
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute>
-              <Admin />
-            </ProtectedRoute>
-          }
-        />
+        {/* ADMIN */}
+        <Route path="/admin" element={<Admin />} />
+        <Route path="/settings" element={<AdminSettings />} />
 
-        <Route path="/news/:id" element={<NewsDetail />} />
       </Routes>
-    </BrowserRouter>
+    </Router>
   );
 }
 

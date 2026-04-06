@@ -1,26 +1,27 @@
 import axios from "axios";
 
-// 🔥 YOUR LIVE BACKEND URL
 const API = "https://news-backend-efyu.onrender.com";
 
-// GET ALL NEWS
 export const getNews = () => axios.get(`${API}/get-news`);
-
-// ADD NEWS
 export const addNews = (data) => axios.post(`${API}/add-news`, data);
-
-// DELETE NEWS
 export const deleteNews = (id) =>
   axios.delete(`${API}/delete-news/${id}`);
-
-// UPDATE NEWS
 export const updateNews = (id, data) =>
   axios.put(`${API}/update-news/${id}`, data);
 
-// UPLOAD IMAGE
 export const uploadImage = (formData) =>
   axios.post(`${API}/upload`, formData);
 
-// LOGIN
 export const login = (data) =>
   axios.post(`${API}/login`, data);
+
+// ADMIN
+export const createAdmin = (data, token) =>
+  axios.post(`${API}/create-admin`, data, {
+    headers: { Authorization: token },
+  });
+
+export const updateAdmin = (data, token) =>
+  axios.put(`${API}/update-admin`, data, {
+    headers: { Authorization: token },
+  });
