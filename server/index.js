@@ -40,20 +40,6 @@ mongoose
 
 /* ================= INIT ADMIN (RUN ONCE) ================= */
 
-// ⚠️ TEMP ROUTE - REMOVE AFTER USE
-app.post("/init-admin", async (req, res) => {
-  const { email, password } = req.body;
-
-  const existing = await Admin.findOne({ email });
-  if (existing) return res.json("Admin already exists");
-
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  await Admin.create({ email, password: hashedPassword });
-
-  res.json("First admin created ✅");
-});
-
 /* ================= AUTH ================= */
 
 // LOGIN
