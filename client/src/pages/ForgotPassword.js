@@ -4,42 +4,65 @@ import toast from "react-hot-toast";
 
 function ForgotPassword() {
   const [email, setEmail] = useState("");
+  const [resetLink, setResetLink] = useState("");
 
   const handleSubmit = async () => {
-  try {
-    const res = await axios.post(
-      "https://news-backend-efyu.onrender.com/forgot-password",
-      { email }
-    );
+    if (!email) return toast.error("Email required ❌");
 
-    toast.success("Link generated ✅");
+    try {
+      const res = await axios.post(
+        "https://news-backend-efyu.onrender.com/forgot-password",
+        { email }
+      );
 
-    // 👇 SHOW LINK
-    alert("Reset Link:\n" + res.data.resetLink);
+      toast.success("Reset link generated ✅");
 
-  } catch {
-    toast.error("Email not found ❌");
-  }
-};
+      // ✅ STORE LINK
+      setResetLink(res.data.resetLink);
+
+    } catch {
+      toast.error("Email not found ❌");
+    }
+  };
 
   return (
-    <div className="p-10 text-center">
-      <h2 className="text-xl mb-4">Forgot Password</h2>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
 
-      <input
-        placeholder="Enter email"
-        className="border p-2 mb-4"
-        onChange={(e) => setEmail(e.target.value)}
-      />
+      <div className="bg-white p-6 rounded shadow w-96">
 
-      <br />
+        <h2 className="text-xl mb-4 text-center">Forgot Password</h2>
 
-      <button
-        onClick={handleSubmit}
-        className="bg-blue-500 text-white px-4 py-2"
-      >
-        Send Reset Link
-      </button>
+        <input
+          placeholder="Enter email"
+          className="border p-2 w-full mb-4"
+          onChange={(e) => setEmail(e.target.value)}
+        />
+
+        <button
+          onClick={handleSubmit}
+          className="bg-blue-500 text-white w-full py-2 rounded"
+        >
+          Generate Reset Link
+        </button>
+
+        {/* ✅ SHOW LINK */}
+        {resetLink && (
+          <div className="mt-4 p-3 bg-gray-100 rounded text-sm break-all">
+            <p className="mb-2 font-semibold">Reset Link:</p>
+
+            <a
+              href={resetLink}
+              target="_blank"
+              rel="noreferrer"
+              className="text-blue-600 underline"
+            >
+              Open Reset Page
+            </a>
+          </div>
+        )}
+
+      </div>
+
     </div>
   );
 }
