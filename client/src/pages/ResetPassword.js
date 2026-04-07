@@ -10,8 +10,9 @@ function ResetPassword() {
   const [password, setPassword] = useState("");
 
   const handleReset = async () => {
-    if (!password)
-      return toast.error("Password required ❌");
+    if (!password) {
+      return toast.error("Enter new password ❌");
+    }
 
     try {
       await axios.post(
@@ -21,7 +22,6 @@ function ResetPassword() {
 
       toast.success("Password reset successful ✅");
 
-      // ✅ REDIRECT AFTER SUCCESS
       setTimeout(() => {
         navigate("/");
       }, 1500);
@@ -40,7 +40,7 @@ function ResetPassword() {
 
         <input
           type="password"
-          placeholder="New password"
+          placeholder="New Password"
           className="border p-2 w-full mb-4"
           onChange={(e) => setPassword(e.target.value)}
         />
