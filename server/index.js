@@ -17,7 +17,8 @@ const SECRET = "mysecretkey";
 app.use(cors());
 app.use(express.json());
 
-// FILE STORAGE
+/* ================= FILE STORAGE ================= */
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "uploads/"),
   filename: (req, file, cb) => {
@@ -33,18 +34,23 @@ const upload = multer({ storage });
 app.use("/uploads", express.static("uploads"));
 
 /* ================= DATABASE ================= */
+
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB Connected ✅"))
   .catch((err) => console.log(err));
-
-/* ================= INIT ADMIN (RUN ONCE) ================= */
 
 /* ================= AUTH ================= */
 
 // LOGIN
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
+
+  if (!email || !password)
+    return res.status(400).json("All fields required");
+
+  if (!email.includes("@"))
+    return res.status(400).json("Invalid email");
 
   const admin = await Admin.findOne({ email });
   if (!admin) return res.status(400).json("Email not found");
@@ -78,8 +84,14 @@ const verifyToken = (req, res, next) => {
 app.post("/create-admin", verifyToken, async (req, res) => {
   const { email, password } = req.body;
 
+  if (!email || !password)
+    return res.status(400).json("All fields required");
+
+  if (!email.includes("@"))
+    return res.status(400).json("Invalid email");
+
   const existing = await Admin.findOne({ email });
-  if (existing) return res.status(400).json("Admin already exists");
+  if (existing) return res.status(400).json("Admin exists");
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -91,12 +103,13 @@ app.post("/create-admin", verifyToken, async (req, res) => {
 app.put("/update-admin", verifyToken, async (req, res) => {
   const { email, password } = req.body;
 
-  const hashedPassword = await bcrypt.hash(password, 10);
+  const updateData = { email };
 
-  await Admin.findByIdAndUpdate(req.user.id, {
-    email,
-    password: hashedPassword,
-  });
+  if (password) {
+    updateData.password = await bcrypt.hash(password, 10);
+  }
+
+  await Admin.findByIdAndUpdate(req.user.id, updateData);
 
   res.json("Updated ✅");
 });
@@ -113,11 +126,51 @@ app.get("/all-admins", verifyToken, async (req, res) => {
 
 app.delete("/delete-admin/:id", verifyToken, async (req, res) => {
   if (req.user.id === req.params.id) {
-    return res.status(400).json("You cannot delete yourself ❌");
+    return res.status(400).json("Cannot delete yourself ❌");
   }
 
   await Admin.findByIdAndDelete(req.params.id);
-  res.json("Admin deleted ✅");
+  res.json("Deleted ✅");
+});
+
+/* ================= FORGOT PASSWORD (NO EMAIL) ================= */
+
+// GENERATE RESET LINK
+app.post("/forgot-password", async (req, res) => {
+  const { email } = req.body;
+
+  const admin = await Admin.findOne({ email });
+  if (!admin) return res.status(400).json("Email not found");
+
+  const token = jwt.sign({ id: admin._id }, SECRET, {
+    expiresIn: "15m",
+  });
+
+  const resetLink = `http://localhost:3000/reset-password/${token}`;
+
+  res.json({
+    message: "Reset link generated ✅",
+    resetLink,
+  });
+});
+
+// RESET PASSWORD
+app.post("/reset-password/:token", async (req, res) => {
+  const { password } = req.body;
+
+  try {
+    const decoded = jwt.verify(req.params.token, SECRET);
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await Admin.findByIdAndUpdate(decoded.id, {
+      password: hashedPassword,
+    });
+
+    res.json("Password reset successful ✅");
+  } catch {
+    res.status(400).json("Invalid or expired token");
+  }
 });
 
 /* ================= NEWS ================= */
@@ -129,7 +182,7 @@ app.get("/get-news", async (req, res) => {
 
 app.post("/add-news", async (req, res) => {
   await News.create(req.body);
-  res.json("News added");
+  res.json("Added");
 });
 
 app.delete("/delete-news/:id", async (req, res) => {

@@ -49,6 +49,12 @@ function Login() {
         >
           Login
         </button>
+        <p
+  className="text-blue-500 cursor-pointer text-sm mt-2"
+  onClick={() => (window.location.href = "/forgot")}
+>
+  Forgot Password?
+</p>
 
       </div>
     </div>

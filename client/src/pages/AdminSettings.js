@@ -1,4 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+
 import {
   createAdmin,
   updateAdmin,
@@ -8,6 +11,7 @@ import {
 } from "../services/api";
 
 function AdminSettings() {
+  const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
   const [currentEmail, setCurrentEmail] = useState("");
@@ -19,7 +23,6 @@ function AdminSettings() {
   const [updateEmail, setUpdateEmail] = useState("");
   const [updatePassword, setUpdatePassword] = useState("");
 
-  // ✅ FIXED with useCallback
   const fetchData = useCallback(async () => {
     try {
       const me = await getCurrentAdmin(token);
@@ -28,8 +31,8 @@ function AdminSettings() {
 
       const res = await getAllAdmins(token);
       setAdmins(res.data);
-    } catch (err) {
-      console.log(err);
+    } catch {
+      toast.error("Failed to load data ❌");
     }
   }, [token]);
 
@@ -38,20 +41,41 @@ function AdminSettings() {
   }, [fetchData]);
 
   const handleCreate = async () => {
-    await createAdmin({ email: newEmail, password: newPassword }, token);
-    alert("Admin created ✅");
-    setNewEmail("");
-    setNewPassword("");
-    fetchData();
+    if (!newEmail || !newPassword)
+      return toast.error("All fields required ❌");
+
+    if (!newEmail.includes("@"))
+      return toast.error("Invalid email ❌");
+
+    if (newPassword.length < 5)
+      return toast.error("Password too short ❌");
+
+    try {
+      await createAdmin({ email: newEmail, password: newPassword }, token);
+      toast.success("Admin created ✅");
+
+      setNewEmail("");
+      setNewPassword("");
+      fetchData();
+    } catch {
+      toast.error("Error creating admin ❌");
+    }
   };
 
   const handleUpdate = async () => {
-    await updateAdmin(
-      { email: updateEmail, password: updatePassword },
-      token
-    );
-    alert("Updated ✅");
-    fetchData();
+    if (!updateEmail)
+      return toast.error("Email required ❌");
+
+    try {
+      await updateAdmin(
+        { email: updateEmail, password: updatePassword },
+        token
+      );
+      toast.success("Updated ✅");
+      fetchData();
+    } catch {
+      toast.error("Update failed ❌");
+    }
   };
 
   const handleDelete = async (id) => {
@@ -59,20 +83,28 @@ function AdminSettings() {
 
     try {
       await deleteAdmin(id, token);
-      alert("Deleted ✅");
+      toast.success("Deleted ✅");
       fetchData();
     } catch (err) {
-      alert(err.response?.data);
+      toast.error(err.response?.data || "Error ❌");
     }
   };
 
   return (
     <div className="p-6 max-w-2xl mx-auto">
 
+      {/* BACK BUTTON */}
+      <button
+        onClick={() => navigate("/")}
+        className="mb-4 bg-gray-700 text-white px-4 py-2 rounded"
+      >
+        ⬅ Back to Home
+      </button>
+
       <h2 className="text-2xl font-bold mb-4">⚙️ Admin Settings</h2>
 
-      <div className="border p-4 mb-6 rounded bg-gray-100">
-        <p><strong>Logged in as:</strong> {currentEmail}</p>
+      <div className="bg-gray-100 p-3 mb-4 rounded">
+        Logged in as: <strong>{currentEmail}</strong>
       </div>
 
       {/* ALL ADMINS */}
@@ -82,9 +114,9 @@ function AdminSettings() {
         {admins.map((admin) => (
           <div
             key={admin._id}
-            className="flex justify-between border-b py-2"
+            className="flex justify-between py-2 border-b"
           >
-            <span>{admin.email}</span>
+            {admin.email}
 
             <button
               onClick={() => handleDelete(admin._id)}
@@ -96,7 +128,7 @@ function AdminSettings() {
         ))}
       </div>
 
-      {/* CREATE */}
+      {/* CREATE ADMIN */}
       <div className="border p-4 mb-6 rounded">
         <h3 className="font-bold mb-2">Create Admin</h3>
 
@@ -116,14 +148,14 @@ function AdminSettings() {
         />
 
         <button
-          className="bg-green-500 text-white px-4 py-2 rounded"
           onClick={handleCreate}
+          className="bg-green-500 text-white px-4 py-2 rounded"
         >
           Create
         </button>
       </div>
 
-      {/* UPDATE */}
+      {/* UPDATE ADMIN */}
       <div className="border p-4 rounded">
         <h3 className="font-bold mb-2">Update My Account</h3>
 
@@ -141,8 +173,8 @@ function AdminSettings() {
         />
 
         <button
-          className="bg-blue-500 text-white px-4 py-2 rounded"
           onClick={handleUpdate}
+          className="bg-blue-500 text-white px-4 py-2 rounded"
         >
           Update
         </button>
