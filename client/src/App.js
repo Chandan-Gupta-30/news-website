@@ -16,10 +16,13 @@ function App() {
   return (
     <Router>
 
-      {/* ✅ Toast Notifications */}
       <Toaster position="top-right" />
 
       <Routes>
+
+        {/* ✅ IMPORTANT: Put this BEFORE "*" */}
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
+
         {/* Public Routes */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
@@ -28,12 +31,12 @@ function App() {
         <Route path="/admin" element={<Admin />} />
         <Route path="/settings" element={<AdminSettings />} />
 
-        {/* Password Reset Flow */}
+        {/* Forgot */}
         <Route path="/forgot" element={<ForgotPassword />} />
-        <Route path="/reset-password/:token" element={<ResetPassword />} />
 
-        {/* Optional fallback */}
+        {/* ❗ Keep this LAST ALWAYS */}
         <Route path="*" element={<Home />} />
+
       </Routes>
 
     </Router>
