@@ -135,18 +135,25 @@ app.delete("/delete-admin/:id", verifyToken, async (req, res) => {
 
 /* ================= FORGOT PASSWORD (NO EMAIL) ================= */
 
-// GENERATE RESET LINK
+// FORGOT PASSWORD
 app.post("/forgot-password", async (req, res) => {
   const { email } = req.body;
 
+  if (!email)
+    return res.status(400).json("Email required ❌");
+
   const admin = await Admin.findOne({ email });
-  if (!admin) return res.status(400).json("Email not found");
+
+  if (!admin)
+    return res
+      .status(400)
+      .json("This email is not registered as admin ❌");
 
   const token = jwt.sign({ id: admin._id }, SECRET, {
     expiresIn: "15m",
   });
 
-  const resetLink = `https://news-website-peach-six.vercel.app/reset-password/${token}`;
+  const resetLink = `${process.env.FRONTEND_URL}/reset-password/${token}`;
 
   res.json({
     message: "Reset link generated ✅",
@@ -157,6 +164,9 @@ app.post("/forgot-password", async (req, res) => {
 // RESET PASSWORD
 app.post("/reset-password/:token", async (req, res) => {
   const { password } = req.body;
+
+  if (!password)
+    return res.status(400).json("Password required ❌");
 
   try {
     const decoded = jwt.verify(req.params.token, SECRET);
@@ -169,7 +179,7 @@ app.post("/reset-password/:token", async (req, res) => {
 
     res.json("Password reset successful ✅");
   } catch {
-    res.status(400).json("Invalid or expired token");
+    res.status(400).json("Invalid or expired link ❌");
   }
 });
 

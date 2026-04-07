@@ -15,25 +15,21 @@ function ForgotPassword() {
         { email }
       );
 
-      toast.success("Reset link generated ✅");
-
-      // ✅ STORE LINK
+      toast.success(res.data.message);
       setResetLink(res.data.resetLink);
-
-    } catch {
-      toast.error("Email not found ❌");
+    } catch (err) {
+      toast.error(err.response?.data || "Error ❌");
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
-
       <div className="bg-white p-6 rounded shadow w-96">
 
         <h2 className="text-xl mb-4 text-center">Forgot Password</h2>
 
         <input
-          placeholder="Enter email"
+          placeholder="Enter admin email"
           className="border p-2 w-full mb-4"
           onChange={(e) => setEmail(e.target.value)}
         />
@@ -45,7 +41,6 @@ function ForgotPassword() {
           Generate Reset Link
         </button>
 
-        {/* ✅ SHOW LINK */}
         {resetLink && (
           <div className="mt-4 p-3 bg-gray-100 rounded text-sm break-all">
             <p className="mb-2 font-semibold">Reset Link:</p>
@@ -62,7 +57,6 @@ function ForgotPassword() {
         )}
 
       </div>
-
     </div>
   );
 }
