@@ -146,7 +146,7 @@ app.post("/forgot-password", async (req, res) => {
     expiresIn: "15m",
   });
 
-  const resetLink = `http://localhost:3000/reset-password/${token}`;
+  const resetLink = `https://news-website-peach-six.vercel.app/reset-password/${token}`;
 
   res.json({
     message: "Reset link generated ✅",
