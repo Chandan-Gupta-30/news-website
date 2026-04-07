@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom";
 
 function Admin() {
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -82,7 +81,6 @@ function Admin() {
         toast.success("News added ✅");
       }
 
-      // Reset form
       setTitle("");
       setContent("");
       setImage(null);
@@ -122,10 +120,9 @@ function Admin() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-
       <div className="max-w-3xl mx-auto bg-white p-6 rounded shadow">
 
-        {/* 🔝 TOP BAR */}
+        {/* TOP BAR */}
         <div className="flex justify-between mb-4">
 
           <button
@@ -230,7 +227,6 @@ function Admin() {
         </div>
 
       </div>
-
     </div>
   );
 }
