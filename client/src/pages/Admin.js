@@ -1,224 +1,234 @@
 import React, { useEffect, useState } from "react";
-import {
-  getNews,
-  addNews,
-  deleteNews,
-  updateNews,
-  uploadImage,
-} from "../services/api";
+import axios from "axios";
+import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 
 function Admin() {
-  const [news, setNews] = useState([]);
+  const navigate = useNavigate();
+  const token = localStorage.getItem("token");
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [category, setCategory] = useState("");
-  const [image, setImage] = useState("");
+  const [image, setImage] = useState(null);
+  const [imageUrl, setImageUrl] = useState("");
 
-  const [file, setFile] = useState(null);
-
+  const [newsList, setNewsList] = useState([]);
   const [editingId, setEditingId] = useState(null);
-  const [showModal, setShowModal] = useState(false);
+
+  /* ================= FETCH NEWS ================= */
+  const fetchNews = async () => {
+    try {
+      const res = await axios.get(
+        "https://news-backend-efyu.onrender.com/get-news"
+      );
+      setNewsList(res.data);
+    } catch {
+      toast.error("Failed to fetch news ❌");
+    }
+  };
 
   useEffect(() => {
     fetchNews();
   }, []);
 
-  const fetchNews = async () => {
-    const res = await getNews();
-    setNews(res.data);
+  /* ================= LOGOUT ================= */
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    toast.success("Logged out ✅");
+
+    setTimeout(() => {
+      navigate("/login");
+    }, 1000);
   };
 
+  /* ================= IMAGE UPLOAD ================= */
   const handleUpload = async () => {
-    if (!file) return;
+    if (!image) return toast.error("Select image first ❌");
 
     const formData = new FormData();
-    formData.append("image", file);
+    formData.append("image", image);
 
-    const res = await uploadImage(formData);
-    setImage(res.data.imageUrl);
-    setFile(null); // clear file
+    try {
+      const res = await axios.post(
+        "https://news-backend-efyu.onrender.com/upload",
+        formData
+      );
+
+      setImageUrl(res.data.imageUrl);
+      toast.success("Image uploaded ✅");
+    } catch {
+      toast.error("Upload failed ❌");
+    }
   };
 
+  /* ================= ADD / UPDATE ================= */
   const handleSubmit = async () => {
-    if (editingId) {
-      await updateNews(editingId, {
-        title,
-        content,
-        category,
-        image,
-      });
-    } else {
-      await addNews({ title, content, category, image });
+    if (!title || !content || !imageUrl) {
+      return toast.error("All fields required ❌");
     }
 
-    resetForm();
-    fetchNews();
+    try {
+      if (editingId) {
+        await axios.put(
+          `https://news-backend-efyu.onrender.com/update-news/${editingId}`,
+          { title, content, imageUrl }
+        );
+        toast.success("News updated ✅");
+      } else {
+        await axios.post(
+          "https://news-backend-efyu.onrender.com/add-news",
+          { title, content, imageUrl }
+        );
+        toast.success("News added ✅");
+      }
+
+      // Reset form
+      setTitle("");
+      setContent("");
+      setImage(null);
+      setImageUrl("");
+      setEditingId(null);
+
+      fetchNews();
+    } catch {
+      toast.error("Error saving news ❌");
+    }
   };
 
+  /* ================= DELETE ================= */
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this news?")) return;
+
+    try {
+      await axios.delete(
+        `https://news-backend-efyu.onrender.com/delete-news/${id}`
+      );
+      toast.success("Deleted ✅");
+      fetchNews();
+    } catch {
+      toast.error("Delete failed ❌");
+    }
+  };
+
+  /* ================= EDIT ================= */
   const handleEdit = (item) => {
-    setEditingId(item._id);
     setTitle(item.title);
     setContent(item.content);
-    setCategory(item.category);
-    setImage(item.image);
-    setShowModal(true);
-  };
+    setImageUrl(item.imageUrl);
+    setEditingId(item._id);
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete?")) return;
-
-    await deleteNews(id);
-    fetchNews();
-  };
-
-  const resetForm = () => {
-    setEditingId(null);
-    setTitle("");
-    setContent("");
-    setCategory("");
-    setImage("");
-    setShowModal(false);
-    setFile(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
-    <div className="p-6">
+    <div className="min-h-screen bg-gray-100 p-6">
 
-      {/* NAVBAR */}
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">🛠 Admin Panel</h2>
+      <div className="max-w-3xl mx-auto bg-white p-6 rounded shadow">
 
-        <div>
-          <a href="/settings" className="mr-4 text-blue-500">
-            Settings ⚙️
-          </a>
+        {/* 🔝 TOP BAR */}
+        <div className="flex justify-between mb-4">
+
           <button
-            onClick={() => (window.location.href = "/login")}
-            className="bg-red-500 text-white px-3 py-1 rounded"
+            onClick={() => navigate("/")}
+            className="bg-gray-700 text-white px-4 py-2 rounded"
           >
-            Logout
+            ⬅ Home
           </button>
-        </div>
-      </div>
 
-      {/* ADD BUTTON */}
-      <button
-        onClick={() => setShowModal(true)}
-        className="bg-green-500 text-white px-4 py-2 rounded mb-6"
-      >
-        + Add News
-      </button>
-
-      {/* MODAL */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center">
-          <div className="bg-white p-6 rounded w-full max-w-lg">
-
-            <h3 className="text-xl font-bold mb-4">
-              {editingId ? "Edit News" : "Add News"}
-            </h3>
-
-            <input
-              placeholder="Title"
-              className="border p-2 w-full mb-2"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-
-            <textarea
-              placeholder="Content"
-              className="border p-2 w-full mb-2"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-            />
-
-            <input
-              placeholder="Category"
-              className="border p-2 w-full mb-2"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-            />
-
-            <input
-              placeholder="Image URL (optional)"
-              className="border p-2 w-full mb-2"
-              value={image}
-              onChange={(e) => setImage(e.target.value)}
-            />
-
-            {/* FILE UPLOAD */}
-            <input
-              type="file"
-              className="mb-2"
-              onChange={(e) => setFile(e.target.files[0])}
-            />
-
+          <div className="flex gap-2">
             <button
-              onClick={handleUpload}
-              disabled={!file}
-              className={`px-3 py-1 rounded mb-3 ${
-                file
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-300 cursor-not-allowed"
-              }`}
+              onClick={() => navigate("/settings")}
+              className="bg-blue-500 text-white px-4 py-2 rounded"
             >
-              Upload Image
+              ⚙ Settings
             </button>
 
-            {/* ACTIONS */}
-            <div className="flex justify-between">
-              <button
-                onClick={handleSubmit}
-                className="bg-green-500 text-white px-4 py-2 rounded"
-              >
-                {editingId ? "Update" : "Add"}
-              </button>
-
-              <button
-                onClick={resetForm}
-                className="bg-gray-400 text-white px-4 py-2 rounded"
-              >
-                Cancel
-              </button>
-            </div>
+            <button
+              onClick={handleLogout}
+              className="bg-red-500 text-white px-4 py-2 rounded"
+            >
+              Logout
+            </button>
           </div>
+
         </div>
-      )}
 
-      {/* NEWS LIST */}
-      <div className="grid md:grid-cols-3 gap-4">
-        {news.map((item) => (
-          <div key={item._id} className="border rounded p-3 shadow">
+        <h2 className="text-2xl font-bold mb-4">📰 Admin Panel</h2>
 
-            {item.image && (
-              <img
-                src={item.image}
-                alt=""
-                className="w-full h-40 object-cover mb-2"
-              />
-            )}
+        {/* FORM */}
+        <input
+          placeholder="Title"
+          className="border p-2 w-full mb-2"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
 
-            <h3 className="font-bold">{item.title}</h3>
-            <p className="text-sm">{item.category}</p>
+        <textarea
+          placeholder="Content"
+          className="border p-2 w-full mb-2"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+        />
 
-            <div className="flex justify-between mt-2">
-              <button
-                onClick={() => handleEdit(item)}
-                className="bg-yellow-400 px-2 py-1 rounded"
-              >
-                Edit
-              </button>
+        <input
+          type="file"
+          className="mb-2"
+          onChange={(e) => setImage(e.target.files[0])}
+        />
 
-              <button
-                onClick={() => handleDelete(item._id)}
-                className="bg-red-500 text-white px-2 py-1 rounded"
-              >
-                Delete
-              </button>
+        <button
+          onClick={handleUpload}
+          disabled={!image}
+          className={`px-4 py-2 rounded mb-2 ${
+            image ? "bg-purple-500 text-white" : "bg-gray-400 text-white"
+          }`}
+        >
+          Upload Image
+        </button>
+
+        <button
+          onClick={handleSubmit}
+          className="bg-green-500 text-white px-4 py-2 rounded w-full"
+        >
+          {editingId ? "Update News" : "Add News"}
+        </button>
+
+        {/* NEWS LIST */}
+        <div className="mt-6">
+          {newsList.map((item) => (
+            <div key={item._id} className="border p-4 mb-3 rounded">
+
+              <h3 className="font-bold">{item.title}</h3>
+              <p>{item.content}</p>
+
+              {item.imageUrl && (
+                <img
+                  src={item.imageUrl}
+                  alt=""
+                  className="w-full mt-2"
+                />
+              )}
+
+              <div className="flex gap-2 mt-2">
+                <button
+                  onClick={() => handleEdit(item)}
+                  className="bg-yellow-500 text-white px-3 py-1 rounded"
+                >
+                  Edit
+                </button>
+
+                <button
+                  onClick={() => handleDelete(item._id)}
+                  className="bg-red-500 text-white px-3 py-1 rounded"
+                >
+                  Delete
+                </button>
+              </div>
+
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
+
       </div>
 
     </div>
