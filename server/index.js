@@ -153,7 +153,8 @@ app.post("/forgot-password", async (req, res) => {
     expiresIn: "15m",
   });
 
-  const resetLink = `${process.env.FRONTEND_URL}/reset-password/${token}`;
+  // ✅ FIXED URL (NO MORE undefined)
+  const resetLink = `https://news-website-peach-six.vercel.app/reset-password/${token}`;
 
   res.json({
     message: "Reset link generated ✅",

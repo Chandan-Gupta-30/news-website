@@ -33,7 +33,6 @@ function ResetPassword() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
-
       <div className="bg-white p-6 rounded shadow w-96">
 
         <h2 className="text-xl mb-4 text-center">Reset Password</h2>
@@ -53,7 +52,6 @@ function ResetPassword() {
         </button>
 
       </div>
-
     </div>
   );
 }
